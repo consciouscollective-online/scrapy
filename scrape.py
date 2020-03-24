@@ -3,28 +3,19 @@ import cfscrape
 import multiprocessing
 
 def worker(word):
+    """
+    Worker process to be called by mutiprocessing module. Need to figure out concurrent web requests in python first.
+    """
     is_word = False
     data = BeautifulSoup(scraper.get("http://www.collinsdictionary.com/dictionary/english/"+word).content.decode("UTF-8"),features="html.parser")
     data = data.body.main.find(class_="dictionaries dictionary")
     if data is not None:
         [s.extract() for s in data('script')]
+        [s.extract() for s in data('noscript')]
         print(word)
         is_word = True
     return word, data, is_word
 
-# headers = {'X-API-TOKEN': 'your_token_here'}
-# payload = {'title': 'value1', 'name': 'value2'}
-#
-# s = requests.Session()
-# r = s.get("https://www.collinsdictionary.com/")
-# cookies = r.cookies
-# r = s.get("https://www.collinsdictionary.com/dictionary/english/barrel", cookies=cookies)
-# soup = BeautifulSoup(r.text)
-
-
-# file = open('out.html', mode='w+')
-# file.write(data)  # => "<!DOCTYPE html><html><head>..."
-# file.close()
 def get_last_words():
     """
     returns the last_is_word WORD, last_not_word WORD
@@ -39,9 +30,6 @@ def get_last_words():
             last_not_word = lines[-1]
 
     return last_is_word,last_not_word
-
-
-
 
 
 if __name__ == '__main__':
