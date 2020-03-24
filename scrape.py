@@ -7,8 +7,8 @@ def worker(word):
     Worker process to be called by mutiprocessing module. Need to figure out concurrent web requests in python first.
     """
     is_word = False
-    data = BeautifulSoup(scraper.get("http://www.collinsdictionary.com/dictionary/english/"+word).content.decode("UTF-8"),features="html.parser")
     try:
+        data = BeautifulSoup(scraper.get("http://www.collinsdictionary.com/dictionary/english/"+word).content.decode("UTF-8"),features="html.parser")
         data = data.body.main.find(class_="dictionaries dictionary")
     except NonetypeError:
         return word, None, False
