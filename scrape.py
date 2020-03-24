@@ -10,7 +10,7 @@ def worker(word):
     try:
         data = BeautifulSoup(scraper.get("http://www.collinsdictionary.com/dictionary/english/"+word).content.decode("UTF-8"),features="html.parser")
         data = data.body.main.find(class_="dictionaries dictionary")
-    except NonetypeError:
+    except AttributeError:
         return word, None, False
     if data is not None:
         [s.extract() for s in data('script')]
