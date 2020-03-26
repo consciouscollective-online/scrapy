@@ -44,9 +44,9 @@ if __name__ == '__main__':
     at_lw_pos = False
     in_file = open("words.txt").readlines()
 
-    out_file = open("out.html", mode="a",buffering=-1)
-    are_words_file = open("are_words.txt", mode="a",buffering=-1)
-    not_words_file = open("not_words.txt", mode="a",buffering=-1)
+    out_file = open("out.html", mode="a")
+    are_words_file = open("are_words.txt", mode="a")
+    not_words_file = open("not_words.txt", mode="a")
     
     for line in in_file:
         if line>=last_word:
