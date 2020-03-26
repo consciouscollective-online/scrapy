@@ -26,11 +26,13 @@ def get_last_words():
     with open('are_words.txt', 'r') as f:
         lines = f.read().splitlines()
         last_is_word = lines[-1]
+        f.close()
 
     with open('not_words.txt', 'r') as f:
         if f:
             lines = f.read().splitlines()
             last_not_word = lines[-1]
+            f.close()
 
     return last_is_word,last_not_word
 
@@ -42,9 +44,9 @@ if __name__ == '__main__':
     at_lw_pos = False
     in_file = open("words.txt").readlines()
 
-    out_file = open("out.html", mode="a")
-    are_words_file = open("are_words.txt", "a")
-    not_words_file = open("not_words.txt", "a")
+    out_file = open("out.html", mode="a",buffering=-1)
+    are_words_file = open("are_words.txt", mode="a",buffering=-1)
+    not_words_file = open("not_words.txt", mode="a",buffering=-1)
     
     for line in in_file:
         if line>=last_word:
@@ -53,11 +55,13 @@ if __name__ == '__main__':
               out_file.write(word+"\n")
               out_file.write(str(data) +"\n")
               are_words_file.write(word)
+              are_words_file.flush()
             else:
                not_words_file.write(word)
+               not_words_file.flush()            
         else:
             continue 
 
-    are_words_file.close()
-    not_words_file.close()
+    # are_words_file.close()
+    # not_words_file.close()
     # out_file.close()
