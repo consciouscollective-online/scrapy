@@ -1,6 +1,7 @@
 from bs4 import BeautifulSoup
-import cfscrape
 import multiprocessing
+import requests
+import cfscrape
 
 def worker(word):
     """
@@ -62,6 +63,7 @@ if __name__ == '__main__':
         else:
             continue 
 
-    # are_words_file.close()
-    # not_words_file.close()
-    # out_file.close()
+    are_words_file.close()
+    not_words_file.close()
+    out_file.close()
+    requests.get("https://hc-ping.com/1ee29187-15bf-401a-86a1-08d6a9e7b1a6")
