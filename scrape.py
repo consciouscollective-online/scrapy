@@ -45,7 +45,7 @@ def scrape_collins():
         print(" done.")
     cache_file = open("cache.data", mode="a")
 
-    #SCRAPE A to Z, 0-9 lists
+    #SCRAPE metadata
     if not lx_complete:
         print("Scraping layer 1/3...", end="", flush=True)
         for char in ascii_lowercase:
@@ -62,13 +62,17 @@ def scrape_collins():
     else:
         print("Using cached data for layer 1/3.")
 
-    #SCAPE wordset
+    #SCAPE word list
     if not ly_complete: 
         print("Scraping layer 2/3...", end="", flush=True)
         
         if not ly_present:
             cache_file.write("#1\n")
         
+        data = BeautifulSoup(G_scraper.get("https://www.collinsdictionary.com/browse/english/words-starting-with-digit").content.decode("UTF-8"),features="html.parser")
+        for d in data.body.find("ul",class_="columns2").find_all("a"):
+            ly.append(d['href'])
+            
         for url in lx:
             newrl = url.strip()
             if newrl <= ly_last_val:
@@ -78,9 +82,6 @@ def scrape_collins():
                 for d in data.body.find("ul",class_="columns2").find_all("a"):
                     ly.append(d['href'])
                 cache_file.write(newrl+"\n")
-        data = BeautifulSoup(G_scraper.get("https://www.collinsdictionary.com/browse/english/words-starting-with-digit").content.decode("UTF-8"),features="html.parser")
-        for d in data.body.find("ul",class_="columns2").find_all("a"):
-            ly.append(d['href'])
         cache_file.write("#END1\n")
         ly_complete = True
         cache_file.flush()
