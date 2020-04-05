@@ -1,69 +1,135 @@
 from bs4 import BeautifulSoup
-import multiprocessing
 import requests
+from string import ascii_lowercase
 import cfscrape
-
-def worker(word):
-    """
-    Worker process to be called by mutiprocessing module. Need to figure out concurrent web requests in python first.
-    """
-    is_word = False
-    try:
-        data = BeautifulSoup(scraper.get("http://www.collinsdictionary.com/dictionary/english/"+word).content.decode("UTF-8"),features="html.parser")
-        data = data.body.main.find(class_="dictionaries dictionary")
-    except AttributeError:
-        return word, None, False
-    if data is not None:
-        [s.extract() for s in data('script')]
-        [s.extract() for s in data('noscript')]
-        print(word)
-        is_word = True
-    return word, data, is_word
-
-def get_last_words():
-    """
-    returns the last_is_word WORD, last_not_word WORD
-    """
-    with open('are_words.txt', 'r') as f:
-        lines = f.read().splitlines()
-        last_is_word = lines[-1]
-        f.close()
-
-    with open('not_words.txt', 'r') as f:
-        if f:
-            lines = f.read().splitlines()
-            last_not_word = lines[-1]
-            f.close()
-
-    return last_is_word,last_not_word
+import os
 
 
-if __name__ == '__main__':
-    scraper = cfscrape.create_scraper() 
-    last_is_word, last_not_word = get_last_words()
-    last_word = max(last_is_word,last_not_word)
-    at_lw_pos = False
-    in_file = open("words.txt").readlines()
+def scrape_collins():
+    cache_a_file = open("cache.data", mode="a+")
+    lx, ly = [], [] 
+    lx_complete, ly_complete = False, False
+    lx_last_val, ly_last_val = "", ""
+    reading = -1
 
-    out_file = open("out.html", mode="a")
-    are_words_file = open("are_words.txt", mode="a")
-    not_words_file = open("not_words.txt", mode="a")
-    
-    for line in in_file:
-        if line>=last_word:
-            word,data,is_word = worker(line.lower())
-            if is_word:
-              out_file.write(word+"\n")
-              out_file.write(str(data) +"\n")
-              are_words_file.write(word)
-              are_words_file.flush()
+    #INITIALISE
+    if os.path.isfile("cache.data"):
+        cache_r_file = open("cache.data", mode="r")
+        print("Reading from cache...", end="", flush=True)
+        for line in cache_r_file:
+            if line[:-2]=="#END":
+                reading = -1
+                if line[:-1]=="#END0":
+                    lx_complete = True
+                elif line[:-1]=="#END1":
+                    ly_complete = True
+
+            if reading == 0:
+                lx.append(line)
+            elif reading == 1:
+                ly.append(line)
+
+            if line[:-1]=="#0":
+                reading = 0
+            elif line[:-1]=="#1":
+                reading = 1           
+        if ly != []:
+            ly_last_val = ly[-1]
+        print(" done.")
+
+
+    else:
+        print("Creating cache file...")
+        cache_r_file = open("cache.data", mode="r+")
+    cache_r_file.close()
+
+
+    #SCRAPE A to Z, 0-9 lists
+    if not lx_complete:
+        print("Scraping layer 1/3...", end="", flush=True)
+        for char in ascii_lowercase:
+            data = BeautifulSoup(G_scraper.get("https://www.collinsdictionary.com/browse/english/words-starting-with-" + char).content.decode("UTF-8"),features="html.parser")
+            for d in data.body.find("ul",class_="columns2").find_all("a"):
+                lx.append(d['href'])
+        cache_a_file.write("#0\n")
+        for item in lx:
+            cache_a_file.write(str(item)+"\n")
+        cache_a_file.write("#END0\n")
+        lx_complete = True
+        cache_a_file.flush()
+        print(" done.", end="\n")
+    else:
+        print("Using cached data for layer 1/3.")
+
+
+    #SCAPE wordset
+    if not ly_complete: 
+        print("Scraping layer 2/3...", end="", flush=True)
+        
+        if ly_last_val != "\n":
+            cache_a_file.write("#1\n")
+        
+        for url in lx:
+            print(ly_last_val)
+            if url <= ly_last_val:
+                pass
             else:
-               not_words_file.write(word)
-               not_words_file.flush()            
+                data = BeautifulSoup(G_scraper.get(url).content.decode("UTF-8"),features="html.parser")
+                for d in data.body.find("ul",class_="columns2").find_all("a"):
+                    ly.append(d['href'])
+                cache_a_file.write(url)
+        data = BeautifulSoup(G_scraper.get("https://www.collinsdictionary.com/browse/english/words-starting-with-digit").content.decode("UTF-8"),features="html.parser")
+        for d in data.body.find("ul",class_="columns2").find_all("a"):
+            ly.append(d['href'])
+        cache_a_file.write("#END1\n")
+        ly_complete = True
+        cache_a_file.flush()
+        print(" done.", end="\n")
+    else:
+        print("Using cached data for layer 2/3.")
+    
+    #SCRAPE dictionary
+    if not (lx_complete and ly_complete):
+        print("Something went awry. Forcing a restart.")
+        print("Clearing local cache...", end="", flush=True)
+        os.remove("cache.data")
+        print(" done.", end="\n")
+    else:
+        print("Scraping dictionary...",end="", flush=True)
+        if os.path.isfile("checked.txt"):
+            checked_file = open("checked.txt", mode="r")
+            last_checked = str(checked_file.readlines()[-1][:-1])
+            checked_file.close()
         else:
-            continue 
+            checked_file = open("checked.txt", mode="a+")
+            checked_file.write("0\n")
+            last_checked = "0"
+            checked_file.close()
+        checked_file = open("checked.txt", mode="a")
+        for url in ly:
+            newrl = url[:-1]
+            if last_checked >= newrl:
+                pass
+            else:
+                print(newrl)
+                data = BeautifulSoup(G_scraper.get(newrl).content.decode("utf-8"),features="html.parser")
 
-    are_words_file.close()
-    not_words_file.close()
+                essence = data.find_all("div",class_="dictentry dictlink")
+                essence = str(essence)
+                out_file.write(essence)
+                out_file.flush()
+                checked_file.write(newrl+"\n")
+                checked_file.flush()
+        print(" done.")
+
+
+### MAIN ###
+if __name__ == "__main__":
+    out_file = open("dictionary.html",mode="a", encoding='utf-8')
+    G_scraper = cfscrape.create_scraper()  # returns a CloudflareScraper instance
+    scrape_collins()
+    checked_file.flush()
+    checked_file.close()
+    out_file.flush()
     out_file.close()
-    requests.get("https://hc-ping.com/1ee29187-15bf-401a-86a1-08d6a9e7b1a6")
+
