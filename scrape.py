@@ -8,16 +8,16 @@ from progress.bar import IncrementalBar
 #GLOBAL NAMESPACE VAR DECLARATIONS
 out_file = open("dictionary.html",mode="a", encoding='utf-8')
 scraper = cfscrape.create_scraper()  # returns a CloudflareScraper instance
-lx, ly = [], [] 
+lx, ly, lz = [], [], []
 lx_begins, ly_begins = False, False
 lx_completed, ly_completed = False, False
-lx_last_val, ly_last_val = "", ""
+lx_last_val, ly_last_val, lz_last_val = "", "", ""
 reading = -1
 
 def read_cache():
-    global reading,lx, lx_completed, lx_begins, lx_last_val
-    global         ly, ly_completed, ly_begins, ly_last_val
-    lx, ly = [], [] 
+    global reading,     lx,  lx_completed, lx_begins, lx_last_val
+    global lz_last_val, ly, ly_completed, ly_begins, ly_last_val
+    lx, ly,lz = [], [], [] 
     if os.path.isfile("cache.data"):
         cache_r_file = open("cache.data", mode="r")
         print("Reading from cache...", end="", flush=True)
@@ -33,15 +33,24 @@ def read_cache():
                 lx.append(line)
             elif reading == 1:
                 ly.append(line)
+            elif reading == 2:
+                lz.append(line)
 
             if line[:-1]=="#0":
                 reading = 0
                 lx_begins = True
             elif line[:-1]=="#1":
                 reading = 1
-                ly_begins = True           
+                ly_begins = True    
+            elif line[:-1]=="#2":
+                reading = 1
+                ly_begins = True     
+
         if ly != []:
             ly_last_val = ly[-1]
+        if lz != []:
+            lz_last_val = lz[-1]
+
         print(" done.")
         cache_r_file.close()
     else:
@@ -51,8 +60,8 @@ def read_cache():
         print(" done.")
     return open("cache.data", mode="a")
 def scrape_collins():
-    global reading,lx, lx_completed, lx_begins, lx_last_val
-    global         ly, ly_completed, ly_begins, ly_last_val
+    global reading,     lx,  lx_completed, lx_begins, lx_last_val
+    global lz_last_val, ly, ly_completed, ly_begins, ly_last_val
     #INITIALISE
     cache_file = read_cache()
 
@@ -75,7 +84,7 @@ def scrape_collins():
     else:
         print("Using cached data for stage 1/3.")
 
-    #SCAPE WORD LIST
+    #SCRAPE WORD LIST
     if not ly_completed: 
         print("Building word list")
         bar = IncrementalBar("Scraping stage 2/3", max=len(lx), suffix='%(percent).1f%% - %(index)s of %(max)s')
@@ -90,14 +99,14 @@ def scrape_collins():
         cache_file = read_cache()   
         for url in lx:
             newrl = url.strip()
-            print(newrl)
-            if newrl >= ly_last_val:
+            if newrl.strip("https://www.collinsdictionary.com/dictionary/english/") < ly_last_val.strip("https://www.collinsdictionary.com/dictionary/english/"):
                 pass
             else:
+                print(newrl)
                 data = BeautifulSoup(scraper.get(newrl).content.decode("UTF-8"),features="html.parser")
                 for d in data.body.find("ul",class_="columns2").find_all("a"):
                     ly.append(d['href'])
-                cache_file.write(newrl+"\n")
+                    cache_file.write(d['href']+"\n")
                 cache_file.flush()
             bar.next()
         cache_file.write("#END1\n")
@@ -117,18 +126,19 @@ def scrape_collins():
         print("Scraping dictionary...")
         if os.path.isfile("checked.txt"):
             checked_file = open("checked.txt", mode="r")
-            last_checked = str(checked_file.readlines()[-1][:-1])
+            last_checked_word = str(checked_file.readlines()[-1][:-1])
             checked_file.close()
         else:
             checked_file = open("checked.txt", mode="a+")
             checked_file.write("0\n")
-            last_checked = "0"
+            last_checked_word = "0"
             checked_file.close()
         checked_file = open("checked.txt", mode="a")
         bar = IncrementalBar("Scraping stage 3/3", max=len(ly), suffix='%(percent).1f%% - %(index)s of %(max)s')
+        cache_file.write("#2\n")
         for url in ly:
             newrl = url.strip()
-            if last_checked >= newrl:
+            if newrl < lz_last_val.strip() :
                 pass
             else:
                 print(newrl)
@@ -137,12 +147,17 @@ def scrape_collins():
                 essence = str(essence)
                 out_file.write(essence)
                 out_file.flush()
-                checked_file.write(newrl+"\n")
+                checked_file.write(newrl.strip("https://www.collinsdictionary.com/browse/english/")+"\n")
                 checked_file.flush()
+                cache_file.write(newrl+"\n")
+                cache_file.flush()
         checked_file.flush()
         checked_file.close()
         out_file.flush()
         out_file.close()
+        cache_file.write("#END2\n")
+        cache_file.flush()
+        cache_file.close()
         print(" done.")
 
 ### MAIN ###
