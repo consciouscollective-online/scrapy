@@ -14,6 +14,10 @@ lx_completed, ly_completed = False, False
 lx_last_val, ly_last_val, lz_last_val = "", "", ""
 reading = -1
 
+def strip_url(string):
+    pos = string.rfind('/')
+    return string[pos+1:]
+ 
 def read_cache():
     global reading,     lx,  lx_completed, lx_begins, lx_last_val
     global lz_last_val, ly, ly_completed, ly_begins, ly_last_val
@@ -99,7 +103,9 @@ def scrape_collins():
         bar = IncrementalBar("Scraping stage 2/3", max=len(lx), suffix='%(percent).1f%% - %(index)s of %(max)s')
         for url in lx:
             newrl = url.strip()
-            if newrl.strip("https://www.collinsdictionary.com/dictionary/english/") < ly_last_val.strip("https://www.collinsdictionary.com/dictionary/english/"):
+            newrl_c = strip_url(newrl)
+            ly_last_val_c = strip_url(ly_last_val)
+            if min(ly_last_val_c,newrl_c)==newrl_c:
                 pass
             else:
                 data = BeautifulSoup(scraper.get(newrl).content.decode("UTF-8"),features="html.parser")
@@ -146,7 +152,7 @@ def scrape_collins():
                 essence = str(essence)
                 out_file.write(essence)
                 out_file.flush()
-                checked_file.write(newrl.strip("https://www.collinsdictionary.com/browse/english/")+"\n")
+                checked_file.write(newrl.lstrip("https://www.collinsdictionary.com/browse/english/")+"\n")
                 checked_file.flush()
                 cache_file.write(newrl+"\n")
                 cache_file.flush()
