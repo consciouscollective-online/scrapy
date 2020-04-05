@@ -102,7 +102,6 @@ def scrape_collins():
             if newrl.strip("https://www.collinsdictionary.com/dictionary/english/") < ly_last_val.strip("https://www.collinsdictionary.com/dictionary/english/"):
                 pass
             else:
-                print(newrl)
                 data = BeautifulSoup(scraper.get(newrl).content.decode("UTF-8"),features="html.parser")
                 for d in data.body.find("ul",class_="columns2").find_all("a"):
                     ly.append(d['href'])
