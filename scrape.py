@@ -96,7 +96,7 @@ def scrape_collins():
                 cache_file.flush()
         cache_file.close()
         cache_file = read_cache()   
-        bar = IncrementalBar("Expanding", max=len(lx), suffix='%(percent).1f%% - %(index)s of %(max)s')
+        bar = IncrementalBar("Scraping stage 2/3", max=len(lx), suffix='%(percent).1f%% - %(index)s of %(max)s')
         for url in lx:
             newrl = url.strip()
             if newrl.strip("https://www.collinsdictionary.com/dictionary/english/") < ly_last_val.strip("https://www.collinsdictionary.com/dictionary/english/"):
