@@ -87,7 +87,6 @@ def scrape_collins():
     #SCRAPE WORD LIST
     if not ly_completed: 
         print("Building word list")
-        bar = IncrementalBar("Scraping stage 2/3", max=len(lx), suffix='%(percent).1f%% - %(index)s of %(max)s')
         if not ly_begins:
             cache_file.write("#1\n")
             data = BeautifulSoup(scraper.get("https://www.collinsdictionary.com/browse/english/words-starting-with-digit").content.decode("UTF-8"),features="html.parser")
@@ -97,6 +96,7 @@ def scrape_collins():
                 cache_file.flush()
         cache_file.close()
         cache_file = read_cache()   
+        bar = IncrementalBar("Expanding", max=len(lx), suffix='%(percent).1f%% - %(index)s of %(max)s')
         for url in lx:
             newrl = url.strip()
             if newrl.strip("https://www.collinsdictionary.com/dictionary/english/") < ly_last_val.strip("https://www.collinsdictionary.com/dictionary/english/"):
