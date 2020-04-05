@@ -68,6 +68,7 @@ def read_cache():
         cache_file = open("cache.data", mode="w+")
         cache_file.close()
         print(" done.")
+    reading=-1
     return open("cache.data", mode="a")
 
 def scrape_collins():
@@ -97,6 +98,7 @@ def scrape_collins():
         print("Using cached data for stage 1/3.")
     print(lx[0])
     #SCRAPE WORD LIST
+
     if not ly_completed: 
         print("Building word list")
         if not ly_begins:
@@ -107,7 +109,7 @@ def scrape_collins():
                 cache_file.write(d['href']+"\n")
                 cache_file.flush()
         cache_file.close()
-        cache_file = read_cache()   
+        cache_file = read_cache()      
         bar = IncrementalBar("Scraping stage 2/3", max=len(lx), suffix='%(percent).1f%% - %(index)s of %(max)s')
         for url in lx:
             newrl = url.strip()
@@ -130,7 +132,6 @@ def scrape_collins():
     else:
         print("Using cached data for layer 2/3.")
     print(ly[0])
-    
     #SCRAPE DICTIONARY
     if not (lx_completed and ly_completed):
         print("Something went awry. Forcing a restart.")
