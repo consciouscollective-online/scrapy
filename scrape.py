@@ -156,7 +156,7 @@ def scrape_collins():
                 essence = str(essence)
                 out_file.write(essence)
                 out_file.flush()
-                checked_file.write(newrl.lstrip("https://www.collinsdictionary.com/browse/english/")+"\n")
+                checked_file.write(strip_url(newrl)+"\n")
                 checked_file.flush()
                 cache_file.write(newrl+"\n")
                 cache_file.flush()
