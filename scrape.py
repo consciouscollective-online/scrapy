@@ -107,7 +107,7 @@ def scrape_collins():
             checked_file.close()
         checked_file = open("checked.txt", mode="a")
         for url in ly:
-            newrl = strip(url)
+            newrl = url.strip()
             if last_checked >= newrl:
                 pass
             else:
