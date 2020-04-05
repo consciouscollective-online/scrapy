@@ -4,7 +4,6 @@ from string import ascii_lowercase
 import cfscrape
 import os
 
-
 def scrape_collins():
     cache_a_file = open("cache.data", mode="a+")
     lx, ly = [], [] 
@@ -37,12 +36,10 @@ def scrape_collins():
             ly_last_val = ly[-1]
         print(" done.")
 
-
     else:
         print("Creating cache file...")
         cache_r_file = open("cache.data", mode="r+")
     cache_r_file.close()
-
 
     #SCRAPE A to Z, 0-9 lists
     if not lx_complete:
@@ -60,7 +57,6 @@ def scrape_collins():
         print(" done.", end="\n")
     else:
         print("Using cached data for layer 1/3.")
-
 
     #SCAPE wordset
     if not ly_complete: 
@@ -112,7 +108,6 @@ def scrape_collins():
             else:
                 print(newrl)
                 data = BeautifulSoup(G_scraper.get(newrl).content.decode("utf-8"),features="html.parser")
-
                 essence = data.find_all("div",class_="dictentry dictlink")
                 essence = str(essence)
                 out_file.write(essence)
@@ -120,7 +115,6 @@ def scrape_collins():
                 checked_file.write(newrl+"\n")
                 checked_file.flush()
         print(" done.")
-
 
 ### MAIN ###
 if __name__ == "__main__":
