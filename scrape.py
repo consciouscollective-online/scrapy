@@ -12,18 +12,18 @@ lx, ly, lz = [], [], []
 lx_begins, ly_begins, lz_begins = False, False, False
 lx_completed, ly_completed, ly_completed = False, False, False
 lx_last_val, ly_last_val, lz_last_val = "", "", ""
-reading = -1
 
 def strip_url(string):
     pos = string.rfind('/')
     return string[pos+1:]
  
 def read_cache():
-    global reading, lx,  lx_completed, lx_begins, lx_last_val
-    global          ly, ly_completed, ly_begins, ly_last_val
-    global          lz, lz_completed, lz_begins, lz_last_val
+    global lx,  lx_completed, lx_begins, lx_last_val
+    global ly, ly_completed, ly_begins, ly_last_val
+    global lz, lz_completed, lz_begins, lz_last_val
     
     lx, ly,lz = [], [], [] 
+    reading=-1
     
     if os.path.isfile("cache.data"):
         cache_r_file = open("cache.data", mode="r")
@@ -37,7 +37,6 @@ def read_cache():
                     ly_completed = True
                 elif line[:-1]=="#END2":
                     lz_completed = True
-
 
             if reading == 0:
                 lx.append(line)
@@ -68,13 +67,12 @@ def read_cache():
         cache_file = open("cache.data", mode="w+")
         cache_file.close()
         print(" done.")
-    reading=-1
     return open("cache.data", mode="a")
 
 def scrape_collins():
-    global reading, lx,  lx_completed, lx_begins, lx_last_val
-    global          ly, ly_completed, ly_begins, ly_last_val
-    global          lz, lz_completed, lz_begins, lz_last_val
+    global lx,  lx_completed, lx_begins, lx_last_val
+    global ly, ly_completed, ly_begins, ly_last_val
+    global lz, lz_completed, lz_begins, lz_last_val
     #INITIALISE
     cache_file = read_cache()
 
@@ -130,7 +128,7 @@ def scrape_collins():
         cache_file.flush()
     else:
         print("Using cached data for layer 2/3.")
-    print(ly[0])
+
     #SCRAPE DICTIONARY
     if not (lx_completed and ly_completed):
         print("Something went awry. Forcing a restart.")
