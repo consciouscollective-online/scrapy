@@ -5,7 +5,6 @@ import cfscrape
 import os
 
 def scrape_collins():
-    cache_a_file = open("cache.data", mode="a+")
     lx, ly = [], [] 
     lx_complete, ly_complete = False, False
     lx_last_val, ly_last_val = "", ""
@@ -40,6 +39,7 @@ def scrape_collins():
         print("Creating cache file...")
         cache_r_file = open("cache.data", mode="r+")
     cache_r_file.close()
+    cache_a_file = open("cache.data", mode="a+")
 
     #SCRAPE A to Z, 0-9 lists
     if not lx_complete:
