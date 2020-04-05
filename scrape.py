@@ -6,6 +6,7 @@ import os
 
 def scrape_collins():
     lx, ly = [], [] 
+    lx_present, ly_present = False, False
     lx_complete, ly_complete = False, False
     lx_last_val, ly_last_val = "", ""
     reading = -1
@@ -29,17 +30,20 @@ def scrape_collins():
 
             if line[:-1]=="#0":
                 reading = 0
+                lx_present = True
             elif line[:-1]=="#1":
-                reading = 1           
+                reading = 1
+                ly_present = True           
         if ly != []:
             ly_last_val = ly[-1]
         print(" done.")
-
+        cache_r_file.close()
     else:
-        print("Creating cache file...")
-        cache_r_file = open("cache.data", mode="r+")
-    cache_r_file.close()
-    cache_a_file = open("cache.data", mode="a+")
+        print("Creating cache file...", end="", flush=True)
+        cache_file = open("cache.data", mode="a+")
+        cache_file.close()
+        print(" done.")
+    cache_file = open("cache.data", mode="a")
 
     #SCRAPE A to Z, 0-9 lists
     if not lx_complete:
@@ -48,12 +52,12 @@ def scrape_collins():
             data = BeautifulSoup(G_scraper.get("https://www.collinsdictionary.com/browse/english/words-starting-with-" + char).content.decode("UTF-8"),features="html.parser")
             for d in data.body.find("ul",class_="columns2").find_all("a"):
                 lx.append(d['href'])
-        cache_a_file.write("#0\n")
+        cache_file.write("#0\n")
         for item in lx:
-            cache_a_file.write(str(item)+"\n")
-        cache_a_file.write("#END0\n")
+            cache_file.write(str(item)+"\n")
+        cache_file.write("#END0\n")
         lx_complete = True
-        cache_a_file.flush()
+        cache_file.flush()
         print(" done.", end="\n")
     else:
         print("Using cached data for layer 1/3.")
@@ -62,23 +66,24 @@ def scrape_collins():
     if not ly_complete: 
         print("Scraping layer 2/3...", end="", flush=True)
         
-        if ly_last_val != "\n":
-            cache_a_file.write("#1\n")
+        if not ly_present:
+            cache_file.write("#1\n")
         
         for url in lx:
-            if url <= ly_last_val:
+            newrl = url.strip()
+            if newrl <= ly_last_val:
                 pass
             else:
-                data = BeautifulSoup(G_scraper.get(url).content.decode("UTF-8"),features="html.parser")
+                data = BeautifulSoup(G_scraper.get(newrl).content.decode("UTF-8"),features="html.parser")
                 for d in data.body.find("ul",class_="columns2").find_all("a"):
                     ly.append(d['href'])
-                cache_a_file.write(url+"\n")
+                cache_file.write(newrl+"\n")
         data = BeautifulSoup(G_scraper.get("https://www.collinsdictionary.com/browse/english/words-starting-with-digit").content.decode("UTF-8"),features="html.parser")
         for d in data.body.find("ul",class_="columns2").find_all("a"):
             ly.append(d['href'])
-        cache_a_file.write("#END1\n")
+        cache_file.write("#END1\n")
         ly_complete = True
-        cache_a_file.flush()
+        cache_file.flush()
         print(" done.", end="\n")
     else:
         print("Using cached data for layer 2/3.")
@@ -102,7 +107,7 @@ def scrape_collins():
             checked_file.close()
         checked_file = open("checked.txt", mode="a")
         for url in ly:
-            newrl = url[:-1]
+            newrl = strip(url)
             if last_checked >= newrl:
                 pass
             else:
