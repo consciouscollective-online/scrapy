@@ -9,8 +9,8 @@ from progress.bar import IncrementalBar
 out_file = open("dictionary.html",mode="a", encoding='utf-8')
 scraper = cfscrape.create_scraper()  # returns a CloudflareScraper instance
 lx, ly, lz = [], [], []
-lx_begins, ly_begins = False, False
-lx_completed, ly_completed = False, False
+lx_begins, ly_begins, lz_begins = False, False, False
+lx_completed, ly_completed, ly_completed = False, False, False
 lx_last_val, ly_last_val, lz_last_val = "", "", ""
 reading = -1
 
@@ -19,8 +19,9 @@ def strip_url(string):
     return string[pos+1:]
  
 def read_cache():
-    global reading,     lx,  lx_completed, lx_begins, lx_last_val
-    global lz_last_val, ly, ly_completed, ly_begins, ly_last_val
+    global reading, lx,  lx_completed, lx_begins, lx_last_val
+    global          ly, ly_completed, ly_begins, ly_last_val
+    global          lz, lz_completed, lz_begins, lz_last_val
     lx, ly,lz = [], [], [] 
     if os.path.isfile("cache.data"):
         cache_r_file = open("cache.data", mode="r")
@@ -32,6 +33,9 @@ def read_cache():
                     lx_completed = True
                 elif line[:-1]=="#END1":
                     ly_completed = True
+                elif line[:-1]=="#END2":
+                    lz_completed = True
+
 
             if reading == 0:
                 lx.append(line)
@@ -47,8 +51,8 @@ def read_cache():
                 reading = 1
                 ly_begins = True    
             elif line[:-1]=="#2":
-                reading = 1
-                ly_begins = True     
+                reading = 2
+                lz_begins = True     
 
         if ly != []:
             ly_last_val = ly[-1]
@@ -63,9 +67,11 @@ def read_cache():
         cache_file.close()
         print(" done.")
     return open("cache.data", mode="a")
+
 def scrape_collins():
-    global reading,     lx,  lx_completed, lx_begins, lx_last_val
-    global lz_last_val, ly, ly_completed, ly_begins, ly_last_val
+    global reading, lx,  lx_completed, lx_begins, lx_last_val
+    global          ly, ly_completed, ly_begins, ly_last_val
+    global          lz, lz_completed, lz_begins, lz_last_val
     #INITIALISE
     cache_file = read_cache()
 
@@ -107,6 +113,7 @@ def scrape_collins():
             ly_last_val_c = strip_url(ly_last_val)
             if min(ly_last_val_c,newrl_c)==newrl_c:
                 pass
+                bar.next()
             else:
                 data = BeautifulSoup(scraper.get(newrl).content.decode("UTF-8"),features="html.parser")
                 for d in data.body.find("ul",class_="columns2").find_all("a"):
@@ -129,24 +136,18 @@ def scrape_collins():
         print(" done.", end="\n")
     else:
         print("Scraping dictionary...")
-        if os.path.isfile("checked.txt"):
-            checked_file = open("checked.txt", mode="r")
-            last_checked_word = str(checked_file.readlines()[-1][:-1])
-            checked_file.close()
-        else:
-            checked_file = open("checked.txt", mode="a+")
-            checked_file.write("0\n")
-            last_checked_word = "0"
-            checked_file.close()
-        checked_file = open("checked.txt", mode="a")
+        checked_file = open("checked.txt", mode="a+")
+        cache_file = read_cache()
         bar = IncrementalBar("Scraping stage 3/3", max=len(ly), suffix='%(percent).1f%% - %(index)s of %(max)s')
-        cache_file.write("#2\n")
+        if not lz_begins:
+            cache_file.write("#2\n")
         for url in ly:
             newrl = url.strip()
-            if newrl < lz_last_val.strip() :
+            if min(strip_url(newrl),strip_url(lz_last_val.strip()))==strip_url(newrl):
+                bar.next()
                 pass
             else:
-                print(newrl)
+                bar.next()
                 data = BeautifulSoup(scraper.get(newrl).content.decode("utf-8"),features="html.parser")
                 essence = data.find_all("div",class_="dictentry dictlink")
                 essence = str(essence)
@@ -163,6 +164,7 @@ def scrape_collins():
         cache_file.write("#END2\n")
         cache_file.flush()
         cache_file.close()
+        bar.finish()
         print(" done.")
 
 ### MAIN ###
