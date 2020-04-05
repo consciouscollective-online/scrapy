@@ -96,7 +96,6 @@ def scrape_collins():
         bar.finish()
     else:
         print("Using cached data for stage 1/3.")
-    print(lx[0])
     #SCRAPE WORD LIST
 
     if not ly_completed: 
