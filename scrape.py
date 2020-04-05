@@ -2,12 +2,13 @@ from bs4 import BeautifulSoup
 import requests
 from string import ascii_lowercase
 import cfscrape
-import os
+import os, sys
+from progress.bar import IncrementalBar
 
 def scrape_collins():
     lx, ly = [], [] 
-    lx_present, ly_present = False, False
-    lx_complete, ly_complete = False, False
+    lx_begins, ly_begins = False, False
+    lx_completed, ly_completed = False, False
     lx_last_val, ly_last_val = "", ""
     reading = -1
 
@@ -19,9 +20,9 @@ def scrape_collins():
             if line[:-2]=="#END":
                 reading = -1
                 if line[:-1]=="#END0":
-                    lx_complete = True
+                    lx_completed = True
                 elif line[:-1]=="#END1":
-                    ly_complete = True
+                    ly_completed = True
 
             if reading == 0:
                 lx.append(line)
@@ -30,10 +31,10 @@ def scrape_collins():
 
             if line[:-1]=="#0":
                 reading = 0
-                lx_present = True
+                lx_begins = True
             elif line[:-1]=="#1":
                 reading = 1
-                ly_present = True           
+                ly_begins = True           
         if ly != []:
             ly_last_val = ly[-1]
         print(" done.")
@@ -46,27 +47,29 @@ def scrape_collins():
     cache_file = open("cache.data", mode="a")
 
     #SCRAPE metadata
-    if not lx_complete:
-        print("Scraping layer 1/3...", end="", flush=True)
+    if not lx_completed:
+        print("Scraping meta-data")
+        bar = IncrementalBar("Scraping stage 1/3", max=len(ascii_lowercase), suffix='%(percent).1f%% - %(index)s of %(max)s')
         for char in ascii_lowercase:
             data = BeautifulSoup(G_scraper.get("https://www.collinsdictionary.com/browse/english/words-starting-with-" + char).content.decode("UTF-8"),features="html.parser")
             for d in data.body.find("ul",class_="columns2").find_all("a"):
                 lx.append(d['href'])
+            bar.next()
         cache_file.write("#0\n")
         for item in lx:
             cache_file.write(str(item)+"\n")
         cache_file.write("#END0\n")
-        lx_complete = True
+        lx_completed = True
         cache_file.flush()
-        print(" done.", end="\n")
+        bar.finish()
     else:
-        print("Using cached data for layer 1/3.")
+        print("Using cached data for stage 1/3.")
 
     #SCAPE word list
-    if not ly_complete: 
-        print("Scraping layer 2/3...", end="", flush=True)
-        
-        if not ly_present:
+    if not ly_completed: 
+        print("Building word list")
+        bar = IncrementalBar("Scraping stage 2/3", max=len(lx), suffix='%(percent).1f%% - %(index)s of %(max)s')
+        if not ly_begins:
             cache_file.write("#1\n")
         
         data = BeautifulSoup(G_scraper.get("https://www.collinsdictionary.com/browse/english/words-starting-with-digit").content.decode("UTF-8"),features="html.parser")
@@ -82,15 +85,17 @@ def scrape_collins():
                 for d in data.body.find("ul",class_="columns2").find_all("a"):
                     ly.append(d['href'])
                 cache_file.write(newrl+"\n")
+                cache_file.flush()
+            bar.next()
         cache_file.write("#END1\n")
-        ly_complete = True
+        bar.finish()
+        ly_completed = True
         cache_file.flush()
-        print(" done.", end="\n")
     else:
         print("Using cached data for layer 2/3.")
     
     #SCRAPE dictionary
-    if not (lx_complete and ly_complete):
+    if not (lx_completed and ly_completed):
         print("Something went awry. Forcing a restart.")
         print("Clearing local cache...", end="", flush=True)
         os.remove("cache.data")
@@ -107,6 +112,7 @@ def scrape_collins():
             last_checked = "0"
             checked_file.close()
         checked_file = open("checked.txt", mode="a")
+        bar = IncrementalBar("Scraping stage 3/3", max=len(ly), suffix='%(percent).1f%% - %(index)s of %(max)s')
         for url in ly:
             newrl = url.strip()
             if last_checked >= newrl:
