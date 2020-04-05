@@ -5,14 +5,19 @@ import cfscrape
 import os, sys
 from progress.bar import IncrementalBar
 
-def scrape_collins():
-    lx, ly = [], [] 
-    lx_begins, ly_begins = False, False
-    lx_completed, ly_completed = False, False
-    lx_last_val, ly_last_val = "", ""
-    reading = -1
+#GLOBAL NAMESPACE VAR DECLARATIONS
+out_file = open("dictionary.html",mode="a", encoding='utf-8')
+scraper = cfscrape.create_scraper()  # returns a CloudflareScraper instance
+lx, ly = [], [] 
+lx_begins, ly_begins = False, False
+lx_completed, ly_completed = False, False
+lx_last_val, ly_last_val = "", ""
+reading = -1
 
-    #INITIALISE
+def read_cache():
+    global reading,lx, lx_completed, lx_begins, lx_last_val
+    global         ly, ly_completed, ly_begins, ly_last_val
+    lx, ly = [], [] 
     if os.path.isfile("cache.data"):
         cache_r_file = open("cache.data", mode="r")
         print("Reading from cache...", end="", flush=True)
@@ -41,17 +46,22 @@ def scrape_collins():
         cache_r_file.close()
     else:
         print("Creating cache file...", end="", flush=True)
-        cache_file = open("cache.data", mode="a+")
+        cache_file = open("cache.data", mode="w+")
         cache_file.close()
         print(" done.")
-    cache_file = open("cache.data", mode="a")
+    return open("cache.data", mode="a")
+def scrape_collins():
+    global reading,lx, lx_completed, lx_begins, lx_last_val
+    global         ly, ly_completed, ly_begins, ly_last_val
+    #INITIALISE
+    cache_file = read_cache()
 
-    #SCRAPE metadata
+    #SCRAPE METADATA
     if not lx_completed:
         print("Scraping meta-data")
         bar = IncrementalBar("Scraping stage 1/3", max=len(ascii_lowercase), suffix='%(percent).1f%% - %(index)s of %(max)s')
         for char in ascii_lowercase:
-            data = BeautifulSoup(G_scraper.get("https://www.collinsdictionary.com/browse/english/words-starting-with-" + char).content.decode("UTF-8"),features="html.parser")
+            data = BeautifulSoup(scraper.get("https://www.collinsdictionary.com/browse/english/words-starting-with-" + char).content.decode("UTF-8"),features="html.parser")
             for d in data.body.find("ul",class_="columns2").find_all("a"):
                 lx.append(d['href'])
             bar.next()
@@ -65,23 +75,26 @@ def scrape_collins():
     else:
         print("Using cached data for stage 1/3.")
 
-    #SCAPE word list
+    #SCAPE WORD LIST
     if not ly_completed: 
         print("Building word list")
         bar = IncrementalBar("Scraping stage 2/3", max=len(lx), suffix='%(percent).1f%% - %(index)s of %(max)s')
         if not ly_begins:
             cache_file.write("#1\n")
-        
-        data = BeautifulSoup(G_scraper.get("https://www.collinsdictionary.com/browse/english/words-starting-with-digit").content.decode("UTF-8"),features="html.parser")
-        for d in data.body.find("ul",class_="columns2").find_all("a"):
-            ly.append(d['href'])
-            
+            data = BeautifulSoup(scraper.get("https://www.collinsdictionary.com/browse/english/words-starting-with-digit").content.decode("UTF-8"),features="html.parser")
+            for d in data.body.find("ul",class_="columns2").find_all("a"):
+                ly.append(d['href'])
+                cache_file.write(d['href']+"\n")
+                cache_file.flush()
+        cache_file.close()
+        cache_file = read_cache()   
         for url in lx:
             newrl = url.strip()
-            if newrl <= ly_last_val:
+            print(newrl)
+            if newrl >= ly_last_val:
                 pass
             else:
-                data = BeautifulSoup(G_scraper.get(newrl).content.decode("UTF-8"),features="html.parser")
+                data = BeautifulSoup(scraper.get(newrl).content.decode("UTF-8"),features="html.parser")
                 for d in data.body.find("ul",class_="columns2").find_all("a"):
                     ly.append(d['href'])
                 cache_file.write(newrl+"\n")
@@ -94,14 +107,14 @@ def scrape_collins():
     else:
         print("Using cached data for layer 2/3.")
     
-    #SCRAPE dictionary
+    #SCRAPE DICTIONARY
     if not (lx_completed and ly_completed):
         print("Something went awry. Forcing a restart.")
         print("Clearing local cache...", end="", flush=True)
         os.remove("cache.data")
         print(" done.", end="\n")
     else:
-        print("Scraping dictionary...",end="", flush=True)
+        print("Scraping dictionary...")
         if os.path.isfile("checked.txt"):
             checked_file = open("checked.txt", mode="r")
             last_checked = str(checked_file.readlines()[-1][:-1])
@@ -119,22 +132,20 @@ def scrape_collins():
                 pass
             else:
                 print(newrl)
-                data = BeautifulSoup(G_scraper.get(newrl).content.decode("utf-8"),features="html.parser")
+                data = BeautifulSoup(scraper.get(newrl).content.decode("utf-8"),features="html.parser")
                 essence = data.find_all("div",class_="dictentry dictlink")
                 essence = str(essence)
                 out_file.write(essence)
                 out_file.flush()
                 checked_file.write(newrl+"\n")
                 checked_file.flush()
+        checked_file.flush()
+        checked_file.close()
+        out_file.flush()
+        out_file.close()
         print(" done.")
 
 ### MAIN ###
 if __name__ == "__main__":
-    out_file = open("dictionary.html",mode="a", encoding='utf-8')
-    G_scraper = cfscrape.create_scraper()  # returns a CloudflareScraper instance
     scrape_collins()
-    checked_file.flush()
-    checked_file.close()
-    out_file.flush()
-    out_file.close()
-
+    
