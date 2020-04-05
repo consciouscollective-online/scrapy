@@ -70,14 +70,13 @@ def scrape_collins():
             cache_a_file.write("#1\n")
         
         for url in lx:
-            print(ly_last_val)
             if url <= ly_last_val:
                 pass
             else:
                 data = BeautifulSoup(G_scraper.get(url).content.decode("UTF-8"),features="html.parser")
                 for d in data.body.find("ul",class_="columns2").find_all("a"):
                     ly.append(d['href'])
-                cache_a_file.write(url)
+                cache_a_file.write(url+"\n")
         data = BeautifulSoup(G_scraper.get("https://www.collinsdictionary.com/browse/english/words-starting-with-digit").content.decode("UTF-8"),features="html.parser")
         for d in data.body.find("ul",class_="columns2").find_all("a"):
             ly.append(d['href'])
