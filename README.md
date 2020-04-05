@@ -1,11 +1,14 @@
 # scrapy
-A web scrapping bot specifically aimed at scraping dictionary definitions from a CloudFlare-protected website, but it is adaptable to any website.
+A web scrapping bot specifically aimed at scraping dictionary definitions from a CloudFlare-protected website, but it is adaptable to any website. Credit goes to Anarov for doing the heavy lifting regarding bypassing the anti-bot protection measures put in place by Cloud Flare. [Link to that repo](https://github.com/Anorov/cloudflare-scrape "cloudflare-scrape")
 ## Instructions
 Clone the repo `git clone https://github.com/consciouscollective-online/scrapy.git`
+
 Navigate to root directory and run `cd scrapy && pip install -r requirements.txt`
+
 Run the program `python3 scrape.py`
 
 The first layer of scraping doesn't take all-that long and needs to complete in its entirety, in order to be cached.
+
 The second and third layers are actively cached (layer 3, in batches) to aid in recovery from system/program crashes.
 
 ### Recommended execution instructions
