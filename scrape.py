@@ -22,7 +22,9 @@ def read_cache():
     global reading, lx,  lx_completed, lx_begins, lx_last_val
     global          ly, ly_completed, ly_begins, ly_last_val
     global          lz, lz_completed, lz_begins, lz_last_val
+    
     lx, ly,lz = [], [], [] 
+    
     if os.path.isfile("cache.data"):
         cache_r_file = open("cache.data", mode="r")
         print("Reading from cache...", end="", flush=True)
@@ -93,7 +95,7 @@ def scrape_collins():
         bar.finish()
     else:
         print("Using cached data for stage 1/3.")
-
+    print(lx[0])
     #SCRAPE WORD LIST
     if not ly_completed: 
         print("Building word list")
@@ -127,6 +129,7 @@ def scrape_collins():
         cache_file.flush()
     else:
         print("Using cached data for layer 2/3.")
+    print(ly[0])
     
     #SCRAPE DICTIONARY
     if not (lx_completed and ly_completed):
