@@ -19,7 +19,7 @@ Supposing you're on a linux server:
 
 `crontab -e`
 
-insert the following text at the end of the file ("from_email@address.com" can be a dummy string. Mail will use your configured email address):
+insert the following text at the end of the file, edit as needed:
 
 > @reboot cd /path/to/scrapy/ && python3 scrape.py &
 >
